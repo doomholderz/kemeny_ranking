@@ -44,5 +44,7 @@ Outputted table example:
 | 35   | 32 | Pierluigi Martini  |
 
 Overall Kemeny Cost: 66
+
 Overall time for computation: 2139ms
+
 Overall uphill moves: 167
