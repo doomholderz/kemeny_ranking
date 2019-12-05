@@ -75,26 +75,35 @@ def find_cost(solution):
 					score += int(loss[1])
 	return score
 
+# Finds the Kemeny score of the solution taking into acount previous score, and nodes switched
 def iterative_cost(solution, past_score, node1, node2):
+	# Get the nodes that have been switched, and the range between them
 	first_node = solution[node1]
 	second_node = solution[node2]
 	node_range = node2 - node1
 	
+	# For each of the nodes between the first node and second node
 	for i in range(1, node_range+1):
 		
+		# Checks if node1 now adds to the Kemeny score with its new improved position
 		if str(first_node) in lost_dict.keys():
 			for z in lost_dict[str(first_node)]:
 				if str(z[0]) == str(solution[node1 + i]):
 					past_score += int(z[1])
+
+		# Checks if node1 now lowers the Kemeny score with its new improved position
 		if str(first_node) in won_dict.keys():
 			for x in won_dict[str(first_node)]:
 				if str(x[0]) == str(solution[node1 + i]):
 					past_score -= int(x[1])
 		
+		# Checks if node2 now adds to the Kemeny score with its new worsened position
 		if str(second_node) in won_dict.keys():
 			for l in won_dict[str(second_node)]:
 				if str(l[0]) == str(solution[node1 + i]):
 					past_score += int(l[1])
+
+		# Checks if node2 now lowers the Kemeny score with its new worsened position
 		if str(second_node) in lost_dict.keys():
 			for y in lost_dict[str(second_node)]:
 				if str(y[0]) == str(solution[node1 + i]):
@@ -102,22 +111,32 @@ def iterative_cost(solution, past_score, node1, node2):
 
 	return past_score
 
-
+# Function to find a neighbouring solution
 def neighbour(solution):
 	solution2 = solution
 	
+	# Creates a random index of the first node to switch in the neighbour
 	first_swap_index = random.randint(0, len(solution) - 2)
+	# Finds the value associated with that index in the solution
 	first_swap_value = solution[first_swap_index]
 	
+	# Creates a random index of the second node to switch in the neighbour
 	second_swap_index = random.randint(0, len(solution) - 1)
+	# Ensures the second_swap_index is different from the first (so the switched values are unique)
 	while second_swap_index == first_swap_index:
 		second_swap_index = random.randint(0, len(solution) - 1)
+	# Finds the value associated with that index in the solution
 	second_swap_value = solution[second_swap_index]
 
+	# Switches the values at those positions
 	solution2[first_swap_index] = second_swap_value
 	solution2[second_swap_index] = first_swap_value
+
+	# Appends the new neighbour to the return_value array
 	return_value = []
 	return_value.append(solution2)
+
+	# Adds the two indexes to the return_value array (ensuring node1 is the node in better rank position)
 	if first_swap_index < second_swap_index:
 		return_value.append(first_swap_index)
 		return_value.append(second_swap_index)
@@ -125,67 +144,108 @@ def neighbour(solution):
 		return_value.append(second_swap_index)
 		return_value.append(first_swap_index)
 
-	#return solution2
 	return return_value
 
-# GET INITIAL SOLUTION
+# Simmulated annealing function using solution, the initial cost (worked out later) and the current temperature)
 def simmulated_annealing(initial_solution, initial_cost, temp):
+
 	uphill_moves = 0
 	output = []
+
+	# Deep copies initial solution so we can compare to this later
 	init_solution = copy.deepcopy(initial_solution)
 	init_cost = initial_cost
-	#init_cost = find_cost(init_solution)
+	# Get the neighbour array using neighbour function
 	solution_tuple = neighbour(initial_solution)
+
+	# Get the neighbour ranking 
 	newx_solution = solution_tuple[0]
+	# Get the two nodes switched
 	node1_index = solution_tuple[1]
 	node2_index = solution_tuple[2]
-	#newx_solution = neighbour(initial_solution)[0]
+
+	# Get the cost of the neighbour using iterative_cost function
 	newx_cost = iterative_cost(newx_solution, init_cost, node1_index, node2_index)
-	#newx_cost = find_cost(newx_solution)
+
+	# If the neighbour cost is better than the original cost
 	if newx_cost <= init_cost:
+		# Return this solution, the cost associated with it, and the number of uphill moves thusfar
 		output.append(newx_solution)
 		output.append(newx_cost)
 		output.append(uphill_moves)
+		
 		return output
-		#return newx_solution
+
 	else:
+		# Find out the change in cost ∆C
 		change_in_cost = newx_cost - init_cost
+		# Provided the temp isn't equal to 0 (divide by zero error)
 		if temp != 0:
+			# Use simmulated annealing pseudocode equation
 			if (random.uniform(0, 1)) < math.exp(-change_in_cost / temp):
+				# Will be undertaking an uphill move
 				uphill_moves += 1
+				# Output new solution, new cost, and number of uphill moves
 				output.append(newx_solution)
 				output.append(newx_cost)
 				output.append(uphill_moves)
+				
 				return output
-				#return newx_solution
+		
+		# Output the old solution, associated cost, and uphill moves (neighbourhood isn't good enough)	
 		output.append(init_solution)
 		output.append(init_cost)
 		output.append(uphill_moves)
 		return output
-		#return init_solution
-
+	
+# Set the count for stopping criteria
 count = 0
+num_non_improve = 200
+# Set the number of uphill moves to 0
 uphill_moves = 0
+# Get the time before computing
 millis = int(round(time.time() * 1000))
+
+# Compute cost of initial solution
 initial_cost = find_cost(initial_solution)
+# Get the initial solution for the simmulated annealing function
 initial_solution2 = simmulated_annealing(initial_solution, initial_cost, initial_temperature)[0]
+# Set the temperature to the initial temperature
 temperature = initial_temperature
-while count < 200:
+
+# While stopping criteria isn't met
+while count < num_non_improve:
+	# For length of temperature range
 	for i in range(temperature_length):
+		# Get deep copy of solution that we can use to compare to later
 		init_solution2 = copy.deepcopy(initial_solution2)
+
+		# Get information about simmulated annealing on this solution
 		new_array = simmulated_annealing(initial_solution2, initial_cost, temperature)
+		
+		# Get the solution after a round of simmulated annealing
 		initial_solution2 = new_array[0]
+		# Get associated cost of this solution
 		initial_cost = new_array[1]
-		#initial_solution2 = simmulated_annealing(initial_solution2, initial_cost, temperature)
+		
+		# If the solution hasn't been improved
 		if init_solution2 == initial_solution2:
+			# Add to the count
 			count += 1
 		else:
 			count = 0
+		# Add to uphill moves if one was made
 		uphill_moves += new_array[2]
+
+	# Cool temperature based on the cooling ratio function
 	temperature = cooling_ratio(temperature)
+
+# Get end time
 millis2 = int(round(time.time() * 1000))
+# Find out time taken in computation
 time_difference = millis2 - millis
 
+# Return table of rankings and related information
 print("Rank\tID\tName")
 print("----------------------------------")
 rank = 0
