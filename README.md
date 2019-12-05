@@ -2,6 +2,9 @@
 Using simmulated annealing to create Kemeny ranking of 1984 F1 competitors
 
 Run using `python3 kemenyranking.py Formula_One_1984.wmg` to create a potential ranking using the .wmg file provided.
+This will attempt to use simmulated annealing to produce a global optima for the ranking order of the competitors, based on edges and weights provided in the Formula_One_1984.wmg file. 
+
+Rankings will be based on reducing the discrepancy of competitors ranks, and victories/losses contradicting the order of these ranks. This is based on ![Kemeny ranking](https://en.wikipedia.org/wiki/Kemeny%E2%80%93Young_method)
 
 Outputted table example:
 
@@ -43,8 +46,3 @@ Outputted table example:
 | 34   | 34 | Mike Thackwell     |
 | 35   | 32 | Pierluigi Martini  |
 
-Overall Kemeny Cost: 66
-
-Overall time for computation: 2139ms
-
-Overall uphill moves: 167
